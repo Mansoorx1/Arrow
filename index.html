@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090b12">
+<title>ARROW HELL — Arrow Escape</title>
+<style>
+:root{color-scheme:dark;--bg:#090b12;--panel:#121725;--panel2:#191f30;--line:#2b344b;--text:#f4f6ff;--muted:#9ca8c4;--cyan:#69e6ff;--pink:#ff5d91;--green:#74f0b0;--gold:#ffd166}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% -20%,#202a47 0%,var(--bg) 55%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh}
+button{font:inherit;touch-action:manipulation}
+.app{max-width:760px;margin:0 auto;padding:16px 14px 28px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 0 16px}
+.brand{font-weight:1000;letter-spacing:.11em;font-size:clamp(20px,5vw,30px);line-height:1}
+.brand span{color:var(--cyan)}
+.kicker{color:var(--muted);font-size:10px;letter-spacing:.2em;margin-top:6px}
+.pill{border:1px solid var(--line);background:#111827;padding:8px 11px;border-radius:999px;color:var(--muted);font-size:12px;white-space:nowrap}
+.panel{background:linear-gradient(145deg,rgba(22,29,46,.96),rgba(14,18,30,.96));border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:0 12px 34px #0002}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.leveltitle{font-size:20px;font-weight:850}
+.sub{color:var(--muted);font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:#0d1220;border:1px solid #252e43;border-radius:12px;padding:9px 10px;min-width:0}
+.stat .label{font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.stat .value{font-size:18px;font-weight:850;margin-top:2px}
+.lives{color:var(--pink)}.hints{color:var(--gold)}.remain{color:var(--cyan)}
+.board-wrap{padding:10px;background:#080b13;border:1px solid #29334b;border-radius:16px;overflow:hidden}
+#board{display:grid;gap:3px;width:100%;aspect-ratio:1/1;max-width:620px;margin:auto;touch-action:manipulation}
+.cell{min-width:0;min-height:0;border:1px solid #202941;border-radius:5px;background:#101626;display:flex;align-items:center;justify-content:center;padding:0;color:var(--cyan);font-size:clamp(13px,4.2vw,27px);font-weight:900;line-height:1;cursor:pointer;transition:background .12s,transform .12s,border-color .12s;user-select:none;-webkit-tap-highlight-color:transparent}
+.cell.empty{background:#0b101b;border-color:#151c2b;cursor:default}
+.cell.arrow{background:linear-gradient(145deg,#1b2a40,#111b2c);text-shadow:0 0 12px #69e6ff50}
+.cell.arrow:active{transform:scale(.91)}
+.cell.blocked{color:var(--pink);border-color:#a93e65;background:#32172a;animation:shake .18s linear}
+.cell.hint{color:#111827;background:var(--gold);border-color:#fff0a3;text-shadow:none;box-shadow:0 0 18px #ffd16680}
+.cell.removing{opacity:0;transform:scale(.4)}
+@keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.btn{border:1px solid var(--line);border-radius:12px;background:#1a2234;color:var(--text);padding:12px 9px;font-weight:750;font-size:13px;cursor:pointer}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--cyan);border-color:var(--cyan);color:#071019}
+.btn.warn{border-color:#754056;color:#ff9fbd}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.message{min-height:22px;text-align:center;color:var(--muted);font-size:12px;margin:10px 0 0}
+.message.good{color:var(--green)}.message.bad{color:var(--pink)}
+.levels-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.level-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}
+.level-btn{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:#0d1220;color:var(--muted);font-size:11px;font-weight:800;padding:0}
+.level-btn.done{border-color:#2d8768;color:var(--green);background:#10251f}
+.level-btn.current{border-color:var(--cyan);color:var(--cyan);box-shadow:inset 0 0 0 1px var(--cyan)}
+.level-btn:disabled{opacity:.3}
+.footer{text-align:center;color:#68738e;font-size:11px;line-height:1.6;padding:8px 10px 0}
+.overlay{position:fixed;inset:0;background:#05070ddd;display:none;align-items:center;justify-content:center;padding:22px;z-index:5}
+.overlay.show{display:flex}
+.modal{width:min(420px,100%);background:#141b2b;border:1px solid #34405a;border-radius:22px;padding:24px;text-align:center;box-shadow:0 25px 90px #0009}
+.modal h2{font-size:28px;margin:0 0 8px}.modal p{color:var(--muted);line-height:1.5;font-size:14px}
+.modal .btn{width:100%;margin-top:8px}
+@media(min-width:600px){.app{padding-top:24px}.panel{padding:18px}.cell{border-radius:7px}.board-wrap{padding:14px}}
+@media(max-width:360px){.app{padding:10px 8px}.panel{padding:10px}.level-grid{gap:3px}.level-btn{font-size:10px}.btn{font-size:12px;padding:11px 5px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div><div class="brand">ARROW <span>HELL</span></div><div class="kicker">50 LEVELS · ZERO MERCY</div></div>
+  <div class="pill">◈ NIGHTMARE MODE</div>
+</header>
+
+<section class="panel">
+  <div class="topline">
+    <div><div class="leveltitle" id="levelTitle">LEVEL 01</div><div class="sub" id="levelSubtitle">Find the exit sequence.</div></div>
+    <div class="pill" id="rank">ROOKIE</div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="label">Mistakes left</div><div class="value lives" id="lives">♥ ♥ ♥</div></div>
+    <div class="stat"><div class="label">Hints left</div><div class="value hints" id="hints">3</div></div>
+    <div class="stat"><div class="label">Arrows left</div><div class="value remain" id="remaining">0</div></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="board-wrap"><div id="board" aria-label="Arrow puzzle board"></div></div>
+  <div class="controls">
+    <button class="btn primary" id="hintBtn">✦ Use hint</button>
+    <button class="btn" id="restartBtn">↻ Restart</button>
+    <button class="btn warn" id="resetBtn">Reset save</button>
+  </div>
+  <div class="message" id="message" role="status">Tap an arrow whose path to the edge is clear.</div>
+</section>
+
+<section class="panel">
+  <div class="levels-head"><div><strong>LEVEL SELECT</strong><div class="sub">Clear a level to unlock the next.</div></div><div class="pill" id="progress">0 / 50</div></div>
+  <div class="level-grid" id="levelGrid"></div>
+</section>
+<div class="footer">Your progress saves on this device. Clearing browser storage may erase it.<br>Made for thumbs. Built to test your patience.</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">LEVEL CLEARED</h2>
+    <p id="modalText">You escaped this board.</p>
+    <button class="btn primary" id="modalMain">Next level →</button>
+    <button class="btn" id="modalSecondary">Stay here</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const TOTAL = 50, START_LIVES = 3, START_HINTS = 3;
+  const ARROWS = {U:"↑",D:"↓",L:"←",R:"→"};
+  const $ = id => document.getElementById(id);
+  const boardEl=$("board"), messageEl=$("message"), overlay=$("overlay");
+  const STORE="arrowHellSaveV1";
+  let save = loadSave(), level=save.unlocked, board=[], size=5, lives=START_LIVES, hints=START_HINTS, solved=false, locked=false, hintCell=-1;
+
+  function loadSave(){
+    try{
+      const x=JSON.parse(localStorage.getItem(STORE));
+      if(x && Number.isInteger(x.unlocked)) return {unlocked:Math.max(1,Math.min(TOTAL,x.unlocked)),completed:Array.isArray(x.completed)?x.completed.filter(n=>Number.isInteger(n)&&n>=1&&n<=TOTAL):[]};
+    }catch(e){}
+    return {unlocked:1,completed:[]};
+  }
+  function persist(){try{localStorage.setItem(STORE,JSON.stringify(save));}catch(e){}}
+  function randInt(n){return Math.floor(Math.random()*n);}
+  function seededRandom(seed){
+    let a=seed>>>0;
+    return () => {a+=0x6D2B79F5;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};
+  }
+  function chooseSize(n){return n<=3?5:n<=7?6:n<=12?7:n<=18?8:n<=26?9:n<=36?10:n<=44?11:12;}
+  function rayCells(index,dir,n){
+    const r=Math.floor(index/n),c=index%n,arr=[];
+    if(dir==="U")for(let y=r-1;y>=0;y--)arr.push(y*n+c);
+    if(dir==="D")for(let y=r+1;y<n;y++)arr.push(y*n+c);
+    if(dir==="L")for(let x=c-1;x>=0;x--)arr.push(r*n+x);
+    if(dir==="R")for(let x=c+1;x<n;x++)arr.push(r*n+x);
+    return arr;
+  }
+  function canExit(index, state=board){
+    const a=state[index]; if(!a || a.removed)return false;
+    return rayCells(index,a.dir,size).every(i=>!state[i]||state[i].removed);
+  }
+  // Construct a guaranteed-solvable board by adding arrows only when their exit ray is clear.
+  // The reverse of placement order is therefore a valid solution sequence.
+  function generate(n){
+    size=chooseSize(n);
+    const rng=seededRandom(0xA22F00+n*7919);
+    const count=Math.min(size*size-2, Math.round(size*size*(0.36 + Math.min(n,50)*0.0035)));
+    const state=Array(size*size).fill(null);
+    let placed=0, attempts=0;
+    while(placed<count && attempts<size*size*35){
+      attempts++;
+      const idx=Math.floor(rng()*state.length);
+      if(state[idx])continue;
+      const dirs=["U","D","L","R"].sort(()=>rng()-.5);
+      let options=dirs.filter(d=>rayCells(idx,d,size).every(i=>!state[i]));
+      if(!options.length)continue;
+      // Slightly favor longer rays: arrows point through more of the board, creating dependencies.
+      options.sort((a,b)=>rayCells(idx,b,size).length-rayCells(idx,a,size).length);
+      const top=options.slice(0,Math.min(2,options.length));
+      const dir=top[Math.floor(rng()*top.length)];
+      state[idx]={dir,removed:false};
+      placed++;
+    }
+    // Every generated board has a known exit sequence, even if the board is less dense than targeted.
+    return state;
+  }
+  function setMessage(text,type=""){
+    messageEl.textContent=text; messageEl.className="message"+(type?" "+type:"");
+  }
+  function renderBoard(){
+    boardEl.innerHTML="";
+    boardEl.style.gridTemplateColumns=`repeat(${size},minmax(0,1fr))`;
+    boardEl.style.gridTemplateRows=`repeat(${size},minmax(0,1fr))`;
+    board.forEach((a,i)=>{
+      const b=document.createElement("button");
+      b.type="button"; b.className="cell";
+      if(!a||a.removed){b.classList.add("empty");b.disabled=true;b.setAttribute("aria-label","Empty cell");}
+      else{
+        b.classList.add("arrow");b.textContent=ARROWS[a.dir];
+        b.setAttribute("aria-label",`Arrow pointing ${({U:"up",D:"down",L:"left",R:"right"})[a.dir]}`);
+        if(i===hintCell)b.classList.add("hint");
+        b.addEventListener("click",()=>tapArrow(i,b));
+      }
+      boardEl.appendChild(b);
+    });
+    $("remaining").textContent=board.filter(a=>a&&!a.removed).length;
+  }
+  function renderStats(){
+    $("levelTitle").textContent=`LEVEL ${String(level).padStart(2,"0")}`;
+    $("levelSubtitle").textContent=`${size} × ${size} grid · ${Math.round(level/5)*5||1} steps deeper into chaos`;
+    $("lives").textContent="♥ ".repeat(lives).trim()+(lives<START_LIVES?" ·":"");
+    $("hints").textContent=hints;
+    $("rank").textContent=level<=5?"ROOKIE":level<=15?"HUNTER":level<=30?"NIGHTMARE":level<=44?"VOID WALKER":"ARROW DEMON";
+    $("hintBtn").disabled=hints<=0||solved||locked;
+    $("progress").textContent=`${save.completed.length} / ${TOTAL}`;
+    renderLevelGrid();
+  }
+  function renderLevelGrid(){
+    const grid=$("levelGrid");grid.innerHTML="";
+    for(let n=1;n<=TOTAL;n++){
+      const b=document.createElement("button");b.className="level-btn";b.textContent=n;
+      if(save.completed.includes(n))b.classList.add("done");
+      if(n===level)b.classList.add("current");
+      b.disabled=n>save.unlocked;
+      b.addEventListener("click",()=>startLevel(n));
+      grid.appendChild(b);
+    }
+  }
+  function tapArrow(i,el){
+    if(locked||solved)return;
+    hintCell=-1;
+    if(canExit(i)){
+      board[i].removed=true;
+      if(navigator.vibrate)navigator.vibrate(12);
+      setMessage("Clean exit. Keep thinking ahead.","good");
+      renderBoard();renderStats();
+      if(board.every(a=>!a||a.removed))winLevel();
+    }else{
+      lives--;
+      el.classList.remove("blocked");void el.offsetWidth;el.classList.add("blocked");
+      if(navigator.vibrate)navigator.vibrate([30,35,30]);
+      setMessage(`Blocked! That arrow cannot escape. ${lives} mistake${lives===1?"":"s"} left.`, "bad");
+      renderStats();
+      if(lives<=0)loseLevel();
+    }
+  }
+  function useHint(){
+    if(hints<=0||solved||locked)return;
+    const exits=board.map((a,i)=>a&&!a.removed&&canExit(i)?i:-1).filter(i=>i>=0);
+    if(!exits.length){setMessage("No clear arrow found. Restart this board if something seems wrong.","bad");return;}
+    hints--;hintCell=exits[randInt(exits.length)];
+    setMessage("Hint: tap the glowing arrow. Hints reset when you restart a level.","good");
+    renderBoard();renderStats();
+  }
+  function startLevel(n){
+    level=Math.max(1,Math.min(save.unlocked,n));
+    board=generate(level);lives=START_LIVES;hints=START_HINTS;solved=false;locked=false;hintCell=-1;
+    overlay.classList.remove("show");
+    setMessage("Tap an arrow whose path to the edge is clear.");
+    renderBoard();renderStats();
+  }
+  function restartLevel(){
+    if(locked)return;
+    startLevel(level);
+    setMessage("Board reset. Three mistakes and three hints restored.");
+  }
+  function winLevel(){
+    solved=true;locked=true;
+    if(!save.completed.includes(level))save.completed.push(level);
+    if(level<TOTAL)save.unlocked=Math.max(save.unlocked,level+1);
+    persist();renderStats();
+    $("modalTitle").textContent=level===TOTAL?"YOU BEAT ARROW HELL":"LEVEL CLEARED";
+    $("modalText").textContent=level===TOTAL?"All 50 levels conquered. Your friends have no excuses now.":"Board cleared. "+(lives===3?"Flawless run.":"You made it out.")+" Ready for the next nightmare?";
+    $("modalMain").textContent=level===TOTAL?"Play level 1 again →":"Next level →";
+    $("modalSecondary").textContent="Review this level";
+    $("modalMain").onclick=()=>startLevel(level===TOTAL?1:Math.min(TOTAL,level+1));
+    $("modalSecondary").onclick=()=>{overlay.classList.remove("show");locked=false;};
+    overlay.classList.add("show");
+    setMessage("Board cleared!","good");
+  }
+  function loseLevel(){
+    solved=true;locked=true;
+    $("modalTitle").textContent="LOCKED IN";
+    $("modalText").textContent="You used all three mistakes. Reset the board, study the arrows, and plan the exit order.";
+    $("modalMain").textContent="Try again";
+    $("modalSecondary").textContent="Keep looking";
+    $("modalMain").onclick=()=>startLevel(level);
+    $("modalSecondary").onclick=()=>{overlay.classList.remove("show");locked=false;};
+    overlay.classList.add("show");
+  }
+  $("hintBtn").addEventListener("click",useHint);
+  $("restartBtn").addEventListener("click",restartLevel);
+  $("resetBtn").addEventListener("click",()=>{
+    if(confirm("Erase all completed levels and restart from Level 1?")){
+      save={unlocked:1,completed:[]};persist();startLevel(1);setMessage("Save erased. Start again.");
+    }
+  });
+  startLevel(level);
+})();
+</script>
+</body>
+  </html>
